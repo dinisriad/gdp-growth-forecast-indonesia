@@ -1,27 +1,42 @@
 import requests
 import pandas as pd
 
-url = "https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.KD.ZG?format=json&per_page=100"
+INDICATORS = {
+    "gdp_growth": "NY.GDP.MKTP.KD.ZG",
+    "inflation": "FP.CPI.TOTL.ZG",
+    "unemployment": "SL.UEM.TOTL.ZS",
+    "population_growth": "SP.POP.GROW",
+    "exports": "NE.EXP.GNFS.ZS",
+    "imports": "NE.IMP.GNFS.ZS",
+    "fdi": "BX.KLT.DINV.WD.GD.ZS",
+    "exchange_rate": "PA.NUS.FCRF"
+}
 
-response = requests.get(url)
+for file_name, indicator_code in INDICATORS.items():
 
-data = response.json()[1]
+    url = (
+        f"https://api.worldbank.org/v2/country/IDN/"
+        f"indicator/{indicator_code}"
+        f"?format=json&per_page=100"
+    )
 
-df = pd.DataFrame([
-    {
-        "Year": item["date"],
-        "GDP_Growth": item["value"]
-    }
-    for item in data
-])
+    response = requests.get(url)
 
-df = df.dropna()
+    data = response.json()[1]
 
-print(df.head())
+    df = pd.DataFrame([
+        {
+            "Year": item["date"],
+            file_name: item["value"]
+        }
+        for item in data
+    ])
 
-df.to_csv(
-    "data/raw/gdp_growth.csv",
-    index=False
-)
+    df = df.dropna()
 
-print("GDP data saved successfully!")
+    df.to_csv(
+        f"data/raw/{file_name}.csv",
+        index=False
+    )
+
+    print(f"✅ {file_name}.csv saved")
